@@ -1,19 +1,13 @@
 package mail.reader.impl;
 
-import com.google.api.client.util.Base64;
-import com.google.api.client.util.StringUtils;
-import com.google.api.services.gmail.model.Message;
-import com.google.api.services.gmail.model.MessagePart;
 import mail.reader.Mail;
 
 public class MailImpl implements Mail {
 
-    private final String messageBody;
+    private String message;
 
-    public MailImpl(Message message) {
-        MessagePart payload = message.getPayload();
-        messageBody = StringUtils.newStringUtf8(Base64.decodeBase64(payload.getParts().get(0).getBody().getData()));
-
+    public MailImpl(String message) {
+        this.message = message;
     }
 
     @Override
@@ -23,7 +17,7 @@ public class MailImpl implements Mail {
 
     @Override
     public String getMessage() {
-        return messageBody;
+        return message;
     }
 
     @Override

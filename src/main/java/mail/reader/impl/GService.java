@@ -9,22 +9,27 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.Base64;
+import com.google.api.client.util.StringUtils;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.common.collect.Lists;
 import mail.reader.GmailQuickstart;
+import mail.reader.Mail;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GService {
     private static final String APPLICATION_NAME = "Gmail API Java Quickstart";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final List<String> SCOPES = Lists.newArrayList(GmailScopes.GMAIL_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+    private static final String TOKENS_DIRECTORY_PATH = "tokens";
     private static final String user = "me";
 
     private static GService gService;
@@ -49,6 +54,14 @@ public class GService {
         return gService;
     }
 
+    public List<String> listAllMessagesIds() {
+        try {
+            return service.users().messages().list(user).execute().getMessages().stream().map(m -> m.getId()).collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot list messages ids", e);
+        }
+    }
+
 
     /**
      * Creates an authorized Credential object.
@@ -71,5 +84,12 @@ public class GService {
         return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
     }
 
-
+    public Mail getMailForId(String id) {
+        try {
+            String messageBody = StringUtils.newStringUtf8(Base64.decodeBase64(service.users().messages().get(user, id).execute().getPayload().getParts().get(0).getBody().getData()));
+            return new MailImpl(messageBody);
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot get message with id: " + id, e);
+        }
+    }
 }
