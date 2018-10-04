@@ -19,11 +19,22 @@ public class MailImpl implements Mail {
 
     @Override
     public String getMessage() {
+        if (message == null) {
+            return "";
+        }
         return message;
     }
 
     @Override
     public String getAttatchments() {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "MailImpl{" +
+                "message='" + message + '\'' +
+                ", title='" + title + '\'' +
+                '}';
     }
 }

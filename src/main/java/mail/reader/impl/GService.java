@@ -10,20 +10,21 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.Base64;
-import com.google.api.client.util.StringUtils;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Message;
-import com.google.api.services.gmail.model.MessagePart;
 import com.google.common.collect.Lists;
 import mail.reader.GmailQuickstart;
-import mail.reader.Mail;
 
+import javax.mail.Session;
+import javax.mail.internet.MimeMessage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class GService {
@@ -86,15 +87,25 @@ public class GService {
         return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
     }
 
-    public Mail getMailForId(String id) {
+    public MimeMessage getMailForId(String id) {
         try {
-            Message msg = service.users().messages().get(user, id).execute();
-            MessagePart payload = msg.getPayload();
-            String title = payload.getHeaders().stream().filter(t -> t.getName().equals("Subject")).map(t -> t.getValue()).findFirst().orElse("No topic");
-            String messageBody = StringUtils.newStringUtf8(Base64.decodeBase64(payload.getParts().get(0).getBody().getData()));
-            return new MailImpl(title, messageBody);
+            Message msg = service.users().messages().get(user, id).setFormat("raw").execute();
+            System.out.println("Got message for id: " + id);
+            return getMimeMessage(msg);
         } catch (Exception e) {
             throw new RuntimeException("Cannot get message with id: " + id, e);
+        }
+    }
+
+    public MimeMessage getMimeMessage(Message msg) {
+        try {
+            byte[] bytes = Base64.decodeBase64(msg.getRaw());
+            Properties prop = new Properties();
+            Session session = Session.getDefaultInstance(prop, null);
+
+            return new MimeMessage(session, new ByteArrayInputStream(bytes));
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot create mime message ", e);
         }
     }
 }

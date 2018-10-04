@@ -10,6 +10,15 @@ repositories {
     mavenCentral()
 }
 
+task customFatJar(type: Jar) {
+    manifest {
+        attributes 'Main-class': 'mail.reader.GmailQuickstart'
+    }
+    baseName = 'all-in-on-jar'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 dependencies {
     compile 'com.google.api-client:google-api-client:1.25.0'
     compile 'com.google.api-client:google-api-client-servlet:1.25.0'
@@ -20,4 +29,6 @@ dependencies {
     compile 'com.google.api-client:google-api-client-xml:1.25.0'
     compile 'com.google.oauth-client:google-oauth-client-jetty:1.23.0'
     compile 'com.google.apis:google-api-services-gmail:v1-rev83-1.23.0'
+    compile group: 'com.sun.mail', name: 'javax.mail', version: '1.6.2'
+
 }
