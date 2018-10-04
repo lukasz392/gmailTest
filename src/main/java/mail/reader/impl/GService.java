@@ -14,6 +14,8 @@ import com.google.api.client.util.StringUtils;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
+import com.google.api.services.gmail.model.Message;
+import com.google.api.services.gmail.model.MessagePart;
 import com.google.common.collect.Lists;
 import mail.reader.GmailQuickstart;
 import mail.reader.Mail;
@@ -86,8 +88,11 @@ public class GService {
 
     public Mail getMailForId(String id) {
         try {
-            String messageBody = StringUtils.newStringUtf8(Base64.decodeBase64(service.users().messages().get(user, id).execute().getPayload().getParts().get(0).getBody().getData()));
-            return new MailImpl(messageBody);
+            Message msg = service.users().messages().get(user, id).execute();
+            MessagePart payload = msg.getPayload();
+            String title = payload.getHeaders().stream().filter(t -> t.getName().equals("Subject")).map(t -> t.getValue()).findFirst().orElse("No topic");
+            String messageBody = StringUtils.newStringUtf8(Base64.decodeBase64(payload.getParts().get(0).getBody().getData()));
+            return new MailImpl(title, messageBody);
         } catch (Exception e) {
             throw new RuntimeException("Cannot get message with id: " + id, e);
         }
